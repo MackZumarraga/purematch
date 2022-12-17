@@ -2,6 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
+const argon = require('argon2');
+
 require('dotenv').config();
 require('./auth/passport');
 
@@ -21,13 +23,25 @@ app.post('/register', async (req, res) => {
     const { name, email, password } = req.body
 
     try {
+        const hash = await argon.hash(password);
         const user = await User.create({
             name,
             email,
-            password
+            password,
+            hash,
         });
 
-        return res.json(user)
+        const jwToken = jwt.sign({
+            id: user.id,
+            email: user.email,
+        }, process.env.JWT_SECRET);
+
+        return res.json({
+            message: "Welcome!",
+            token: jwToken,
+            uuid: user.uuid,
+        });
+
     } catch (error) {
         console.log(error);
         return res.status(400).json(error);
@@ -48,6 +62,12 @@ app.post('/login', async (req, res) => {
         });
     }
 
+    try {
+        await argon.verify(user.hash, password);
+    } catch (error) {
+        return res.json({ message: "Credentials Incorrect" });   
+    }
+
     const jwToken = jwt.sign({
         id: user.id,
         email: user.email,
@@ -56,13 +76,14 @@ app.post('/login', async (req, res) => {
     return res.json({
         message: "Welcome Back!",
         token: jwToken,
+        uuid: user.uuid,
     });
 
 });
 
 
 //USERS
-app.get('/users', async (req, res) => {
+app.get('/users', passport.authenticate("jwt", { session: false }), async (req, res) => {
     try {
         const users = await User.findAll();
         
@@ -73,7 +94,7 @@ app.get('/users', async (req, res) => {
     }
 });
 
-app.get('/users/:uuid', async (req, res) => {
+app.get('/users/:uuid', passport.authenticate("jwt", { session: false }), async (req, res) => {
     
     const uuid = req.params.uuid
 
@@ -91,25 +112,7 @@ app.get('/users/:uuid', async (req, res) => {
 });
 
 
-app.post('/users', async(req, res) => {
-    const { name, email, password } = req.body
-
-    try {
-        const user = await User.create({
-            name,
-            email,
-            password
-        });
-
-        return res.json(user)
-    } catch (error) {
-        console.log(error);
-        return res.status(400).json(error);
-    }
-});
-
-
-app.patch('/users/:uuid', async (req, res) => {
+app.patch('/users/:uuid', passport.authenticate("jwt", { session: false }), async (req, res) => {
     const { name, email, password } = req.body
     const uuid = req.params.uuid
 
@@ -132,7 +135,7 @@ app.patch('/users/:uuid', async (req, res) => {
 });
 
 
-app.delete('/users/:uuid', async (req, res) => {
+app.delete('/users/:uuid', passport.authenticate("jwt", { session: false }), async (req, res) => {
     
     const uuid = req.params.uuid
 
@@ -163,7 +166,7 @@ app.get('/posts', passport.authenticate("jwt", { session: false }), async (req, 
     }
 });
 
-app.post('/posts', async (req, res) => {
+app.post('/posts', passport.authenticate("jwt", { session: false }), async (req, res) => {
     const { userUuid, title, description, photo } = req.body;
 
     try {

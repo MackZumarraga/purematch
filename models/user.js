@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
     }
 
     toJSON() {
-      return { ...this.get(), id: undefined }
+      return { ...this.get(), id: undefined, hash: undefined }
     }
   }
   User.init({
@@ -47,6 +47,10 @@ module.exports = (sequelize, DataTypes) => {
         notNull: { msg: 'User must have a password' },
         notEmpty: { msg: 'Password must not be empty' }
       }
+    },
+    hash: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
   }, 
   {
