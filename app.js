@@ -1,5 +1,10 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const jwt = require('jsonwebtoken');
+const passport = require('passport');
+require('dotenv').config();
+require('./auth/passport');
+
 const { sequelize, User, Post } = require('./models');
 
 
@@ -9,6 +14,52 @@ const PORT = process.env.PORT || 5000
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
+
+
+//AUTH
+app.post('/register', async (req, res) => {
+    const { name, email, password } = req.body
+
+    try {
+        const user = await User.create({
+            name,
+            email,
+            password
+        });
+
+        return res.json(user)
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json(error);
+    }
+});
+
+
+app.post('/login', async (req, res) => {
+    const { email, password } = req.body
+
+    const user = await User.findOne({
+        where: { email }
+    });
+
+    if (!user) {
+        return res.json({
+            message: "Invalid credentials"
+        });
+    }
+
+    const jwToken = jwt.sign({
+        id: user.id,
+        email: user.email,
+    }, process.env.JWT_SECRET);
+
+    return res.json({
+        message: "Welcome Back!",
+        token: jwToken,
+    });
+
+});
+
 
 //USERS
 app.get('/users', async (req, res) => {
@@ -101,7 +152,7 @@ app.delete('/users/:uuid', async (req, res) => {
 
 
 //POSTS
-app.get('/posts', async (req, res) => {
+app.get('/posts', passport.authenticate("jwt", { session: false }), async (req, res) => {
     try {
         const posts = await Post.findAll({ include: 'user' });
         
