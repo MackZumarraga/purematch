@@ -5,19 +5,23 @@ module.exports = (dateCreated) => {
 
     const dateTodayConverted = luxon.DateTime.fromISO(dateToday);
     const dateCreatedConverted = luxon.DateTime.fromISO(dateCreated.toISOString());
-    
 
-    const diff = dateTodayConverted.diff(dateCreatedConverted, ["years", "months", "weeks", "days", "hours", "minutes", "seconds"]);
+    const timeCategories = ["years", "months", "weeks", "days", "hours", "minutes", "seconds"]
+
+    const diff = dateTodayConverted.diff(dateCreatedConverted, timeCategories);
 
     const elapsedTimesObj = diff.toObject()
 
     let maxTimeKey = null;
     let maxTimeValue = 0;
 
-    for (const [key, value] of Object.entries(elapsedTimesObj)) {
-        if (value > maxTimeValue) {
-            maxTimeValue = value
-            maxTimeKey = key
+
+    for (const time of timeCategories) {
+        let val = elapsedTimesObj[time]
+        
+        if (val > maxTimeValue) {
+            maxTimeValue = val
+            maxTimeKey = time
             break
         }
     }
