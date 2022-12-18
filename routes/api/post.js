@@ -22,6 +22,26 @@ router.get('/', passport.authenticate("jwt", { session: false }), async (req, re
 });
 
 
+//GET POST
+router.get('/:uuid', passport.authenticate("jwt", { session: false }), async (req, res) => {
+    
+    const uuid = req.params.uuid
+
+    try {
+        const post = await Post.findOne({
+            where: { uuid },
+            include: 'user',
+        });
+
+        return res.json(post);
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json(error);
+    }
+});
+
+
+
 //CREATE POST
 router.post('/', passport.authenticate("jwt", { session: false }), async (req, res) => {
     const { userUuid, title, description, photo } = req.body;
