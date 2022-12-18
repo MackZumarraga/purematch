@@ -53,11 +53,9 @@ router.post('/login', async (req, res) => {
         });
     }
 
-    try {
-        await argon.verify(user.hash, password);
-    } catch (error) {
-        return res.json({ message: "Credentials Incorrect" });   
-    }
+    const pwMatch = await argon.verify(user.hash, password);
+
+    if (!pwMatch) return res.json({ message: "Credentials Incorrect" });   
 
     const jwToken = jwt.sign({
         id: user.id,
