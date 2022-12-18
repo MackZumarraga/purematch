@@ -3,6 +3,7 @@ const router = express.Router();
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const argon = require('argon2');
+const elapsedTime = require('./../../utils/elapsed-time')
 
 const { Post, User } = require('../../models');
 
@@ -33,7 +34,13 @@ router.get('/:uuid', passport.authenticate("jwt", { session: false }), async (re
             include: 'user',
         });
 
-        return res.json(post);
+        const elapsedTimeValue = elapsedTime(post.createdAt)
+        post.elapsedTimeValue = elapsedTimeValue
+
+        return res.json({
+            post: post,
+            elapsedTime: post.elapsedTimeValue
+        });
     } catch (error) {
         console.log(error);
         return res.status(400).json(error);
