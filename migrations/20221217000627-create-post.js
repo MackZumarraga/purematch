@@ -14,6 +14,7 @@ module.exports = {
         defaultValue: DataTypes.UUIDV4
       },
       title: {
+        allowNull: false,
         type: DataTypes.STRING
       },
       description: {

@@ -23,7 +23,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4
     },
-    title: DataTypes.STRING,
+    title: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notNull: { msg: 'Post must have a title' },
+        notEmpty: { msg: 'Post title must not be empty' },
+      }
+    },
     description: DataTypes.STRING,
     photo: DataTypes.STRING
   }, {
