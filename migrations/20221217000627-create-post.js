@@ -20,9 +20,6 @@ module.exports = {
       description: {
         type: DataTypes.STRING
       },
-      photo: {
-        type: DataTypes.STRING
-      },
       userId: {
         type: DataTypes.INTEGER,
         allowNull: false,

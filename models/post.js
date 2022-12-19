@@ -33,7 +33,6 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     description: DataTypes.STRING,
-    photo: DataTypes.STRING,
     createdAt: DataTypes.DATE,
   }, {
     sequelize,

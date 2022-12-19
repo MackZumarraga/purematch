@@ -13,18 +13,22 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       this.belongsTo(Post, { foreignKey: 'postId', as: 'post' })
     }
+
+    toJSON() {
+      return { ...this.get(), id: undefined, photoId: undefined, postId: undefined }
+    }
   }
   Photo.init({
     uuid: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4
     },
-    caption: {
+    name: {
         type: DataTypes.STRING,
         allowNull: false,
         validate: {
-          notNull: { msg: 'Photo must have a caption' },
-          notEmpty: { msg: 'Caption must not be empty' },
+          notNull: { msg: 'Photo must have a name' },
+          notEmpty: { msg: 'Name must not be empty' },
           max: 5,
         }
     },

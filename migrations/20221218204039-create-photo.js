@@ -13,8 +13,13 @@ module.exports = {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4
       },
-      caption: {
-        type: DataTypes.STRING
+      name: {
+        allowNull: false,
+        type: DataTypes.STRING,
+      },
+      postId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
       },
       createdAt: {
         allowNull: false,
@@ -26,7 +31,7 @@ module.exports = {
       }
     });
   },
-  async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Photos');
+  async down(queryInterface, DataTypes) {
+    await queryInterface.dropTable('photos');
   }
 };

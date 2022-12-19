@@ -9,7 +9,8 @@ const app = express()
 
 const elapsedTime = require('./../../utils/elapsed-time')
 
-const { Post, User } = require('../../models');
+const { Post, User, Photo } = require('../../models');
+const { json } = require("body-parser");
 
 require('dotenv').config();
 require('./../../auth/passport');
@@ -35,7 +36,7 @@ router.get('/:uuid', passport.authenticate("jwt", { session: false }), async (re
     try {
         const post = await Post.findOne({
             where: { uuid },
-            include: 'user',
+            include: ['user', 'photos'],
         });
 
         const elapsedTimeValue = elapsedTime(post.createdAt)
@@ -77,29 +78,49 @@ const upload = multer({ storage, fileFilter, limits: {files: 5} });
 
 
 router.post('/', passport.authenticate("jwt", { session: false }), upload.array("photo", 5), async (req, res) => {
+    const { userUuid, title, description} = req.body;
 
-    return res.json({ message: "success" })
-    // const { userUuid, title, description, photo } = req.body;
+    const photoNames = (req.files).map(file => {
+        return userUuid + "-" + file.originalname
+    })
 
-    // try {
-    //     const user = await User.findOne({
-    //         where: {
-    //             uuid: userUuid,
-    //         }
-    //     });
 
-    //     const post = await Post.create({
-    //         title,
-    //         description,
-    //         photo,
-    //         userId: user.id
-    //     });
+    try {
+        const user = await User.findOne({
+            where: {
+                uuid: userUuid,
+            }
+        });
 
-    //     return res.json(post)
-    // } catch (error) {
-    //     console.log(error);
-    //     return res.status(400).json(error);
-    // }
+        const post = await Post.create({
+            title,
+            description,
+            userId: user.id,
+        });
+    
+        const uploadedPhotos = photoNames.map(photoName => ({ name: photoName, postId: post.id }));
+    
+        const photos = await Photo.bulkCreate(uploadedPhotos);
+        
+        return res.json({ 
+            message: "success",
+            post: post,
+            photos: photos,
+        });
+
+    } catch (error) {
+        if (error.parent?.code === "22P02") {
+            return res.status(400).json({
+                message: "user not found"
+            });
+        }
+
+        return res.status(400).json({
+            message: error.errors.map(e => {
+                return e.message
+            })
+        });              
+    }
 });
 
 module.exports = router;
