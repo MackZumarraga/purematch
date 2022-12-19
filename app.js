@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const argon = require('argon2');
+const multer = require('multer');
 
 require('dotenv').config();
 require('./auth/passport');
@@ -22,6 +23,24 @@ app.use(express.json());
 app.use("/api/auth", auth);
 app.use("/api/users", users);
 app.use("/api/posts", posts);
+
+app.use((error, req, res, next) => {
+    if (error instanceof multer.MulterError) {
+        if (error.code === "LIMIT_FILE_COUNT") {
+            return res.status(400).json({
+                message: "cannot upload more than 5 photos"
+            })
+        }
+
+        if (error.code === "LIMIT_UNEXPECTED_FILE") {
+            return res.status(400).json({
+                message: "file must be an image"
+            })
+        }
+    }
+})
+
+
 
 
 app.listen({ port: 5000 }, async () => {
