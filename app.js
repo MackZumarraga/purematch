@@ -28,7 +28,7 @@ app.use((error, req, res, next) => {
     if (error instanceof multer.MulterError) {
         if (error.code === "LIMIT_FILE_COUNT") {
             return res.status(400).json({
-                message: "cannot upload more than 5 photos"
+                message: "a post cannot have more than 5 photos"
             })
         }
 

@@ -18,7 +18,7 @@ require('./../../auth/passport');
 //GET POSTS
 router.get('/', passport.authenticate("jwt", { session: false }), async (req, res) => {
     try {
-        const posts = await Post.findAll({ include: 'user' });
+        const posts = await Post.findAll({ include: ['user', 'photos'] });
         
         return res.json(posts);
     } catch (error) {
@@ -84,7 +84,6 @@ router.post('/', passport.authenticate("jwt", { session: false }), upload.array(
         return userUuid + "-" + file.originalname
     })
 
-
     try {
         const user = await User.findOne({
             where: {
@@ -120,6 +119,83 @@ router.post('/', passport.authenticate("jwt", { session: false }), upload.array(
                 return e.message
             })
         });              
+    }
+});
+
+
+//PATCH POST
+router.patch('/:uuid', passport.authenticate("jwt", { session: false }), upload.array("photo", 5), async (req, res) => {
+    const { title, description, replacedPhotos } = req.body;
+    const uuid = req.params.uuid
+
+
+    try {
+        //Handle post's title and description updates
+        const post = await Post.findOne({
+            where: { uuid },
+            include: ['user', 'photos'],
+        });
+       
+        post.title = title ? title : post.title
+        post.description = description ? description : post.description
+        
+        await post.save();
+
+
+        //Handle post's photo updates
+        if (replacedPhotos) {
+            try {                
+                await Photo.destroy({
+                    where: {
+                        uuid: replacedPhotos
+                    }
+                });
+            } catch (error) {
+                return res.status(400).json({
+                    message: "photo doesn't exist"
+                })
+            }
+        } 
+        
+        const afterDeletePost = await Post.findOne({ 
+            where: { uuid },
+            include: 'photos',
+        });
+
+        //Check how many photos are left after deleting
+        const remainingPhotosCount = afterDeletePost.photos.length
+        
+
+        //Replace old photos and/or add new photos
+        const photoNames = (req.files).map(file => {
+            return post.user.uuid + "-" + file.originalname
+        })
+
+        if ((remainingPhotosCount + photoNames.length) <= 5) {
+            const uploadedPhotos = photoNames.map(photoName => ({ name: photoName, postId: post.id }));
+            
+            await Photo.bulkCreate(uploadedPhotos);
+        } else {
+            return res.status(400).json({
+                message: "a post cannot have more than 5 photos"
+            })
+        }
+
+
+        //Retrieve updated post
+        const updatedPost = await Post.findOne({
+            where: { uuid },
+            include: ['user', 'photos'],
+        });
+
+        return res.json({ 
+            message: "success",
+            post: updatedPost,
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json(error);
     }
 });
 
