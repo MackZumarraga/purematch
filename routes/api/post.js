@@ -199,4 +199,25 @@ router.patch('/:uuid', passport.authenticate("jwt", { session: false }), upload.
     }
 });
 
+
+//DELETE POST
+router.delete('/:uuid', passport.authenticate("jwt", { session: false }), async (req, res) => {
+    
+    const uuid = req.params.uuid
+
+    try {
+        const post = await Post.findOne({
+            where: { uuid }
+        });
+
+        await post.destroy();
+
+        return res.json(post);
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json(error);
+    }
+});
+
+
 module.exports = router;
