@@ -3,47 +3,40 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Photo extends Model {
+  class Comment extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
-    static associate({ Post }) {
+    static associate({ User, Post }) {
       // define association here
       this.belongsTo(Post, { foreignKey: 'postId', as: 'post' })
+      this.belongsTo(User, { foreignKey: 'authorId', as: 'author' })
     }
 
     toJSON() {
-      return { ...this.get(), id: undefined, postId: undefined }
+      return { ...this.get(), id: undefined, postId: undefined, authorId: undefined }
     }
   }
-  Photo.init({
+  Comment.init({
     uuid: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4
     },
-    name: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        validate: {
-          notNull: { msg: 'Photo must have a name' },
-          notEmpty: { msg: 'Name must not be empty' },
-        }
-    },
-    awsUrl: {
+    text: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        notNull: { msg: 'Photo must have a URL' },
-        notEmpty: { msg: 'URL must not be empty' },
+        notNull: { msg: 'Comment must not be null' },
+        notEmpty: { msg: 'Comment must not be empty' },
       }
   },
     createdAt: DataTypes.DATE,
   }, {
     sequelize,
-    tableName: 'photos',
-    modelName: 'Photo',
+    tableName: 'comments',
+    modelName: 'Comment',
   });
-  return Photo;
+  return Comment;
 };
