@@ -17,6 +17,10 @@ module.exports = {
         allowNull: false,
         type: DataTypes.STRING,
       },
+      awsUrl: {
+        allowNull: false,
+        type: DataTypes.STRING,
+      },
       postId: {
         type: DataTypes.INTEGER,
         allowNull: false,

@@ -29,9 +29,16 @@ module.exports = (sequelize, DataTypes) => {
         validate: {
           notNull: { msg: 'Photo must have a name' },
           notEmpty: { msg: 'Name must not be empty' },
-          max: 5,
         }
     },
+    awsUrl: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        notNull: { msg: 'Photo must have a URL' },
+        notEmpty: { msg: 'URL must not be empty' },
+      }
+  },
     createdAt: DataTypes.DATE,
   }, {
     sequelize,

@@ -11,6 +11,7 @@ const elapsedTime = require('./../../utils/elapsed-time')
 
 const { Post, User, Photo } = require('../../models');
 const { json } = require("body-parser");
+const { s3Uploadv3, s3Deletev3 } = require("../../utils/s3Service");
 
 require('dotenv').config();
 require('./../../auth/passport');
@@ -55,16 +56,7 @@ router.get('/:uuid', passport.authenticate("jwt", { session: false }), async (re
 
 
 //CREATE POST
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, "uploads");
-    },
-    filename: (req, file, cb) => {
-        const { originalname } = file;
-        const { userUuid } = req.body;
-        cb(null, userUuid + "-" + originalname)
-    }
-});
+const storage = multer.memoryStorage()
 
 const fileFilter = (req, file, cb) => {
     if (file.mimetype.split("/")[0] === 'image') {
@@ -80,9 +72,6 @@ const upload = multer({ storage, fileFilter, limits: {files: 5} });
 router.post('/', passport.authenticate("jwt", { session: false }), upload.array("photo", 5), async (req, res) => {
     const { userUuid, title, description} = req.body;
 
-    const photoNames = (req.files).map(file => {
-        return userUuid + "-" + file.originalname
-    })
 
     try {
         const user = await User.findOne({
@@ -96,8 +85,19 @@ router.post('/', passport.authenticate("jwt", { session: false }), upload.array(
             description,
             userId: user.id,
         });
+
+
+        const photoNames = (req.files).map(file => {
+            return userUuid + "-" + file.originalname
+        })
     
-        const uploadedPhotos = photoNames.map(photoName => ({ name: photoName, postId: post.id }));
+        await s3Uploadv3(userUuid, req.files)
+    
+        const uploadedPhotos = photoNames.map(photoName => ({
+            name: photoName, 
+            postId: post.id,
+            awsUrl: `https://purematch-bucket.s3.amazonaws.com/uploads/${photoName}`, 
+        }));
     
         const photos = await Photo.bulkCreate(uploadedPhotos);
         
@@ -125,7 +125,7 @@ router.post('/', passport.authenticate("jwt", { session: false }), upload.array(
 
 //PATCH POST
 router.patch('/:uuid', passport.authenticate("jwt", { session: false }), upload.array("photo", 5), async (req, res) => {
-    const { title, description, replacedPhotos } = req.body;
+    const { title, description, targetPhotos } = req.body;
     const uuid = req.params.uuid
 
 
@@ -143,11 +143,15 @@ router.patch('/:uuid', passport.authenticate("jwt", { session: false }), upload.
 
 
         //Handle post's photo updates
-        if (replacedPhotos) {
-            try {                
+        if (targetPhotos) {
+            try {    
+                const toBeDeleted = targetPhotos instanceof Array ? targetPhotos : [targetPhotos]
+
+                await s3Deletev3(toBeDeleted); 
+
                 await Photo.destroy({
                     where: {
-                        uuid: replacedPhotos
+                        name: toBeDeleted
                     }
                 });
             } catch (error) {
@@ -172,7 +176,13 @@ router.patch('/:uuid', passport.authenticate("jwt", { session: false }), upload.
         })
 
         if ((remainingPhotosCount + photoNames.length) <= 5) {
-            const uploadedPhotos = photoNames.map(photoName => ({ name: photoName, postId: post.id }));
+            await s3Uploadv3(post.user.uuid, req.files)
+
+            const uploadedPhotos = photoNames.map(photoName => ({
+                name: photoName, 
+                postId: post.id,
+                awsUrl: `https://purematch-bucket.s3.amazonaws.com/uploads/${photoName}`, 
+            }));
             
             await Photo.bulkCreate(uploadedPhotos);
         } else {
