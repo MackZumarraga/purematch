@@ -143,10 +143,15 @@ router.patch('/:uuid', passport.authenticate("jwt", { session: false }), upload.
 
 
         //Handle post's photo updates
-        if (targetPhotos) {
-            try {    
-                const toBeDeleted = targetPhotos instanceof Array ? targetPhotos : [targetPhotos]
+        const toBeDeleted = targetPhotos instanceof Array ? targetPhotos : [targetPhotos]
+        
+        const projectedRemainingPhotoCount = post.photos.length - toBeDeleted.length
+        const toBeAddedCount = req.files.length
 
+        const updateAllowed = (projectedRemainingPhotoCount + toBeAddedCount) <= 5;
+        
+        if (updateAllowed) {
+            try {    
                 await s3Deletev3(toBeDeleted); 
 
                 await Photo.destroy({
@@ -161,16 +166,17 @@ router.patch('/:uuid', passport.authenticate("jwt", { session: false }), upload.
             }
         } 
         
+
+        //Check how many photos are left after deleting
         const afterDeletePost = await Post.findOne({ 
             where: { uuid },
             include: 'photos',
         });
 
-        //Check how many photos are left after deleting
         const remainingPhotosCount = afterDeletePost.photos.length
         
 
-        //Replace old photos and/or add new photos
+        //Replace old photos and/or add new photos both in S3 bucket and database
         const photoNames = (req.files).map(file => {
             return post.user.uuid + "-" + file.originalname
         })
