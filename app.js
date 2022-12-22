@@ -43,8 +43,6 @@ app.use((error, req, res, next) => {
 })
 
 
-
-
 app.listen({ port: 5000 }, async () => {
     console.log(`Listening on port ${PORT}`);
     await sequelize.authenticate();

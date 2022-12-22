@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const passport = require('passport');
-const jwt = require('jsonwebtoken');
 const argon = require('argon2');
 
 const { User } = require('../../models');
@@ -16,8 +15,9 @@ router.get('/', passport.authenticate("jwt", { session: false }), async (req, re
         
         return res.json(users);
     } catch (error) {
-        console.log(error);
-        return res.status(400).json(error);
+        return res.status(400).json({
+            message: "cannot retrieve users"
+        });
     }
 });
 
@@ -35,15 +35,16 @@ router.get('/:uuid', passport.authenticate("jwt", { session: false }), async (re
 
         return res.json(user);
     } catch (error) {
-        console.log(error);
-        return res.status(400).json(error);
+        return res.status(400).json({
+            message: "cannot retrieve user"
+        });
     }
 });
 
 
 //PATCH USER
 router.patch('/:uuid', passport.authenticate("jwt", { session: false }), async (req, res) => {
-    const { name, email, password } = req.body
+    const { name, email, password, username } = req.body
     const uuid = req.params.uuid
 
     try {
@@ -51,6 +52,7 @@ router.patch('/:uuid', passport.authenticate("jwt", { session: false }), async (
             where: { uuid },
         });
         
+        user.username = username ? username : user.username
         user.name = name ? name : user.name
         user.email = email ? email : user.email
         user.password = password ? password : user.password
@@ -64,8 +66,9 @@ router.patch('/:uuid', passport.authenticate("jwt", { session: false }), async (
 
         return res.json(user);
     } catch (error) {
-        console.log(error);
-        return res.status(400).json(error);
+        return res.status(400).json({
+            message: "cannot update user"
+        });
     }
 });
 
@@ -84,8 +87,9 @@ router.delete('/:uuid', passport.authenticate("jwt", { session: false }), async 
 
         return res.json(user);
     } catch (error) {
-        console.log(error);
-        return res.status(400).json(error);
+        return res.status(400).json({
+            message: "cannot delete user"
+        });
     }
 });
 

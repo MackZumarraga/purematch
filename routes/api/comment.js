@@ -19,8 +19,9 @@ router.get('/', passport.authenticate("jwt", { session: false }), async (req, re
         
         return res.json(comments);
     } catch (error) {
-        console.log(error);
-        return res.status(400).json(error);
+        return res.status(400).json({
+            message: "cannot retrieve comments"
+        });
     }
 });
 
@@ -40,8 +41,9 @@ router.get('/:uuid', passport.authenticate("jwt", { session: false }), async (re
             comment: comment,
         });
     } catch (error) {
-        console.log(error);
-        return res.status(400).json(error);
+        return res.status(400).json({
+            message: "cannot retrieve comment"
+        });
     }
 });
 
@@ -110,8 +112,9 @@ router.patch('/:uuid', passport.authenticate("jwt", { session: false }), async (
         });
 
     } catch (error) {
-        console.log(error);
-        return res.status(400).json(error);
+        return res.status(400).json({
+            message: "cannot update comment"
+        });
     }
 });
 
@@ -131,8 +134,9 @@ router.delete('/:uuid', passport.authenticate("jwt", { session: false }), async 
 
         return res.json(comment);
     } catch (error) {
-        console.log(error);
-        return res.status(400).json(error);
+        return res.status(400).json({
+            message: "cannot delete comment"
+        });
     }
 });
 

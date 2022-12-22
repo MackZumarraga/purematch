@@ -63,6 +63,7 @@ router.get('/', passport.authenticate("jwt", { session: false }), async (req, re
                     as: 'comments',
                     limit: commentSize,
                     offset: commentPage,
+                    include: 'author',
                 }
             ]
         });
@@ -77,8 +78,9 @@ router.get('/', passport.authenticate("jwt", { session: false }), async (req, re
             pageFromTotal: pageFromTotal + "/ " + totalPages
         });
     } catch (error) {
-        console.log(error);
-        return res.status(400).json(error);
+        return res.status(400).json({
+            message: "cannot retrieve posts"
+        });
     }
 });
 
@@ -135,8 +137,9 @@ router.get('/:uuid', passport.authenticate("jwt", { session: false }), async (re
             elapsedTime: post.elapsedTimeValue,
         });
     } catch (error) {
-        console.log(error);
-        return res.status(400).json(error);
+        return res.status(400).json({
+            message: "cannot retrieve post"
+        });
     }
 });
 
@@ -297,8 +300,9 @@ router.patch('/:uuid', passport.authenticate("jwt", { session: false }), upload.
         });
 
     } catch (error) {
-        console.log(error);
-        return res.status(400).json(error);
+        return res.status(400).json({
+            message: "cannot update post"
+        });
     }
 });
 
@@ -317,8 +321,9 @@ router.delete('/:uuid', passport.authenticate("jwt", { session: false }), async 
 
         return res.json(post);
     } catch (error) {
-        console.log(error);
-        return res.status(400).json(error);
+        return res.status(400).json({
+            message: "cannot delete post"
+        });
     }
 });
 

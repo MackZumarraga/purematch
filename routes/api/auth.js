@@ -11,7 +11,7 @@ require('./../../auth/passport');
 
 //REGISTER
 router.post('/register', async (req, res) => {
-    const { name, email, password } = req.body
+    const { name, email, password, username } = req.body
 
     try {
         const hash = await argon.hash(password);
@@ -20,6 +20,7 @@ router.post('/register', async (req, res) => {
             email,
             password,
             hash,
+            username
         });
 
         const jwToken = jwt.sign({
@@ -34,8 +35,9 @@ router.post('/register', async (req, res) => {
         });
 
     } catch (error) {
-        console.log(error);
-        return res.status(400).json(error);
+        return res.status(400).json({
+            message: "invalid inputs"
+        });
     }
 });
 
@@ -55,7 +57,7 @@ router.post('/login', async (req, res) => {
 
     const pwMatch = await argon.verify(user.hash, password);
 
-    if (!pwMatch) return res.json({ message: "Credentials Incorrect" });   
+    if (!pwMatch) return res.json({ message: "credentials incorrect" });   
 
     const jwToken = jwt.sign({
         id: user.id,
