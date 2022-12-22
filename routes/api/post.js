@@ -1,16 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const passport = require('passport');
-const jwt = require('jsonwebtoken');
-const argon = require('argon2');
 const multer = require('multer');
 
-const app = express()
 
 const elapsedTime = require('./../../utils/elapsed-time')
 
 const { Post, User, Photo, Comment } = require('../../models');
-const { json } = require("body-parser");
 const { s3Uploadv3, s3Deletev3 } = require("../../utils/s3Service");
 
 require('dotenv').config();
@@ -203,11 +199,9 @@ router.post('/', passport.authenticate("jwt", { session: false }), upload.array(
                 message: "user not found"
             });
         }
-
+              
         return res.status(400).json({
-            message: error.errors.map(e => {
-                return e.message
-            })
+            message: "cannot create post"
         });              
     }
 });
