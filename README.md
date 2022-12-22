@@ -4,7 +4,8 @@
 
 
 To test the application:
-1.
+1. run `npm install`
+2. run `npm run start`
 
 ## Technologies
 - Node.js
