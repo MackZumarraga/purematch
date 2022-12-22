@@ -21,7 +21,7 @@ module.exports = (dateCreated) => {
         
         if (val > maxTimeValue) {
             maxTimeValue = val
-            maxTimeKey = time
+            maxTimeKey = val > 1 ? time : time.slice(0, time.length - 1)
             break
         }
     }
