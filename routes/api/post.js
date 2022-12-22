@@ -9,7 +9,7 @@ const app = express()
 
 const elapsedTime = require('./../../utils/elapsed-time')
 
-const { Post, User, Photo } = require('../../models');
+const { Post, User, Photo, Comment } = require('../../models');
 const { json } = require("body-parser");
 const { s3Uploadv3, s3Deletev3 } = require("../../utils/s3Service");
 
@@ -18,10 +18,64 @@ require('./../../auth/passport');
 
 //GET POSTS
 router.get('/', passport.authenticate("jwt", { session: false }), async (req, res) => {
+    
+    //post pagination variables
+    const pageAsNumber = Number.parseInt(req.query.page); 
+    const sizeAsNumber = Number.parseInt(req.query.size);
+
+    let page = 0;
+    if (Number.isInteger(pageAsNumber) && pageAsNumber > 0) {
+        page = pageAsNumber;
+    };
+
+    let size = 10;
+    if (Number.isInteger(sizeAsNumber) && sizeAsNumber > 0 && sizeAsNumber < 10) {
+        size = sizeAsNumber;
+    };
+
+    //comment in post pagination variables
+    const commentPageAsNumber = Number.parseInt(req.query.commentPage); 
+    const commentSizeAsNumber = Number.parseInt(req.query.commentSize);
+
+    let commentPage = 0;
+    if (Number.isInteger(commentPageAsNumber) && commentPageAsNumber > 0) {
+        commentPage = commentPageAsNumber;
+    };
+
+    let commentSize = 10;
+    if (Number.isInteger(commentSizeAsNumber) && commentSizeAsNumber > 0 && commentSizeAsNumber < 10) {
+        commentSize = commentSizeAsNumber;
+    };
+
+    
     try {
-        const posts = await Post.findAll({ include: ['user', 'photos'] });
+        const posts = await Post.findAndCountAll({
+            limit: size,
+            offset: page * size,
+            include: [{
+                    model: User,
+                    as: 'user',
+                }, {
+                    model: Photo,
+                    as: 'photos',
+                }, {
+                    model: Comment,
+                    as: 'comments',
+                    limit: commentSize,
+                    offset: commentPage,
+                }
+            ]
+        });
+
+        const totalPages = Math.ceil(posts.count / size)
+        const pageFromTotal = page + 1 > totalPages ? totalPages : page + 1
+
         
-        return res.json(posts);
+        return res.json({
+            content: posts.rows,
+            totalPages: totalPages,
+            pageFromTotal: pageFromTotal + "/ " + totalPages
+        });
     } catch (error) {
         console.log(error);
         return res.status(400).json(error);
@@ -34,18 +88,51 @@ router.get('/:uuid', passport.authenticate("jwt", { session: false }), async (re
     
     const uuid = req.params.uuid
 
+
+    //comment in post pagination variables
+    const commentPageAsNumber = Number.parseInt(req.query.commentPage); 
+    const commentSizeAsNumber = Number.parseInt(req.query.commentSize);
+
+    let commentPage = 0;
+    if (Number.isInteger(commentPageAsNumber) && commentPageAsNumber > 0) {
+        commentPage = commentPageAsNumber;
+    };
+
+    let commentSize = 10;
+    if (Number.isInteger(commentSizeAsNumber) && commentSizeAsNumber > 0 && commentSizeAsNumber < 10) {
+        commentSize = commentSizeAsNumber;
+    };
+
     try {
         const post = await Post.findOne({
             where: { uuid },
-            include: ['user', 'photos'],
+            include: ['photos'],
         });
 
         const elapsedTimeValue = elapsedTime(post.createdAt)
         post.elapsedTimeValue = elapsedTimeValue
 
+        const { count, rows } = await Comment.findAndCountAll({
+            where: {
+                postId: post.id
+            },
+            include: 'author',
+            limit: commentSize,
+            offset: commentPage
+        });
+
+
+        const totalCommentPages = Math.ceil(count / commentSize)
+        const commentPageFromTotal = commentPage + 1 > totalCommentPages ? totalCommentPages : commentPage + 1
+
         return res.json({
             post: post,
-            elapsedTime: post.elapsedTimeValue
+            comments: {
+                content: rows,
+                totalCommentPages: totalCommentPages,
+                commentPageFromTotal: commentPageFromTotal + "/ " + totalCommentPages,
+            },
+            elapsedTime: post.elapsedTimeValue,
         });
     } catch (error) {
         console.log(error);
