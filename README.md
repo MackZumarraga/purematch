@@ -2,10 +2,25 @@
 
 ## Overview
 
+### Prerequisites:
+- PostgreSQL 14.6
+- Node.js 16.14
 
 To test the application:
-1. run `npm install`
-2. run `npm run start`
+1. create an env variable with the following variables
+```
+POSTGRES_USER='example_user'
+POSTGRES_PASSWORD='123456789'
+
+JWT_SECRET="super_secret"
+
+AWS_ACCESS_KEY_ID='your-aws-key'
+AWS_SECRET_ACCESS_KEY='your-aws-secret-access-key'
+AWS_REGION=us-east-1
+AWS_BUCKET_NAME='your-s3-bucket-name'
+```
+4. run `npm install`
+5. run `npm run start`
 
 ## Technologies
 - Node.js
@@ -74,10 +89,3 @@ Pagination of comment from post
 
 Ability to add username
 ![image](https://user-images.githubusercontent.com/86270564/209211628-ad77a286-7bb1-4520-a81b-3c67e7b6f148.png)
-
-
-
-
-
-
-
